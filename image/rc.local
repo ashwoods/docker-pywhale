@@ -1,0 +1,22 @@
+#!/bin/sh -e
+
+
+This is the script where all the magic happens.
+
+First we check if there is a data volume with the source mounted at /src
+If it is it's copied to /home/app/src.
+
+git archive | tar -x -C /home/app/src
+
+Calculates the md5 of the requirements.txt and creates a virtualenv with that md5.
+
+If in development mode it tries to install the project from the mounted /src/ (or maybe using a symlink)
+It will run a syncdb --migrate and if passed the sync ENV.
+
+Then it will try to find a run.sh in the src, and if there isnt will run a normal manage.py runserver 0.0.0.0:8000
+
+
+
+
+
+
