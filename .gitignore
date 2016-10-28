@@ -1,2 +1,6 @@
 .vagrant
 .idea
+.venvs
+
+__pycache__
+*.egg-info/

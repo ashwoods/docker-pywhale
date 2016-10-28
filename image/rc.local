@@ -1,48 +1,35 @@
-#!/bin/sh -e
+#!/bin/sh
 
+# The local.rc script will build a new virtualenv if it detects any changes in
+# requirements.txt file and will install the local project if there is a setup.py
+# in /src
 
-#This is the script where all the magic happens.
-#
-#First we check if there is a data volume with the source mounted at /src
-#If it is it's copied to /home/app/src.
-#
-#git archive | tar -x -C /home/app/src
-#
-#Calculates the md5 of the requirements.txt and creates a virtualenv with that md5.
-#
-#If in development mode it tries to install the project from the mounted /src/ (or maybe using a symlink)
-#It will run a syncdb --migrate and if passed the sync ENV.
-#
-#Then it will try to find a run.sh in the src, and if there isnt will run a normal manage.py runserver 0.0.0.0:8000
-#
-# EXAMPLE of USAGE
-#
-# docker run -i -t -v /vagrant/src:/src -e "PYRUN=manage.py \
-#        runserver 0.0.0.0:8000" ashwoods/pywhale:0.1.1 /sbin/my_init -- bash -l
+REQUIREMENTS='/app/src/requirements.txt'
+PYENV_PYTHON='3.5.2'
 
-if [ -d /src ]; then
-    cd /src && git archive --format=tar HEAD --prefix=/src/  |  (cd /home/app && tar xf -)
-    
-    cd /home/app
+[ -n "${PYDEV_REQUIREMENTS}" ] && REQUIREMENTS=${PYDEV_REQUIREMENTS}
+[ -n "${PYDEV_PYTHON}" ] && PYENV_PYTHON=${PYDEV_PYTHON}
 
-    if [ -f src/requirements.txt ]; then
-        CSUM=$(md5sum src/requirements.txt | grep --only-matching -m 1 '^[0-9a-f]*')      
-        
-        # Create a new virtualenv and install reqirements
-        if [ ! -d ./virtualenvs/$CSUM ]; then 
-            virtualenv virtualenvs/$CSUM
-            . virtualenvs/$CSUM/bin/activate
-            pip install -r src/requirements.txt
-        else
-            source virtualenvs/$CSUM/bin/activate
-        fi
-        
-        if [ -f src/setup.py ]; then
-            pip install -e ./src
-        fi
-        python $PYRUN
-    fi 
+set -e
+eval "$(pyenv init -)"
+
+if [ ! -d /app/pyenv/versions/$PYENV_PYTHON ]; then
+    pyenv install $PYENV_PYTHON
+    pyenv global $PYENV_PYTHON
+    pip install --upgrade pip setuptools wheel
+    if [ -f $REQUIREMENTS ]; then
+        pip install -r $REQUIREMENTS
+    fi
+    if [ -f /app/src/setup.py ]; then
+        pip install -e /app/src
+    fi
 fi
+
+
+
+
+
+
 
 
 

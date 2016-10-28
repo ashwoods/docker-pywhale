@@ -1,0 +1,48 @@
+version: '2'
+
+volumes:
+  postgres_data: {}
+  postgres_backup: {}
+  venv: {}
+#  src: {}
+
+services:
+  postgres:
+    image: postgres:9.5
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - postgres_backup:/backups
+    env_file: project/.env
+
+  django:
+    image: ashwoods/pydev:0.1.2
+    volumes:
+      - venv:/app/pyenv
+      - .:/app/src
+    depends_on:
+      - postgres
+      - redis
+#    command: /sbin/my_init -- bash -l
+#    env_file: project/.env
+
+  redis:
+    image: redis:latest
+
+#  celeryworker:
+#     image: ashwoods/pydev:latest
+#    user: django
+#    env_file: .env
+#    depends_on:
+#     - postgres
+#     - redis
+#    command: celery -A project.taskapp worker -l INFO
+#
+#  celerybeat:
+#    build:
+#     image: ashwoods/pydev:latest
+#    user: django
+#    env_file: .env
+#    depends_on:
+#      - postgres
+#      - redis
+#    command: celery -A project.taskapp beat -l INFO
